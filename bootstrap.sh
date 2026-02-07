@@ -5,7 +5,7 @@
 
 set -e
 
-REPO="你的用户名/仓库名"  # 改成你的 GitHub 仓库地址
+REPO="BearGS/mac-config"
 SCRIPT_DIR="$HOME/.dotfiles"
 
 echo "正在拉取配置..."
