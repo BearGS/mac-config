@@ -66,7 +66,7 @@ BREW_PACKAGES=(
 )
 
 # Cask 包
-CASKS=("iterm2" "warp")
+CASKS=("iterm2" "warp" "docker" "docker-compose")
 
 for pkg in "${BREW_PACKAGES[@]}"; do
     if ! brew list "$pkg" &> /dev/null 2>&1; then
