@@ -56,7 +56,7 @@ backup_file() {
 }
 
 # ========== 1. 安装 Homebrew ==========
-echo_info "========== 1/6 安装 Homebrew ==========""
+echo_info "========== 1/6 安装 Homebrew =========="
 if check_brew; then
     echo_info "Homebrew 已安装"
 else
@@ -124,10 +124,10 @@ BREW_PACKAGES=(
     "neovim"
     "zplug"
     "fzf"
-    "eza"          # 现代 ls 替代品
-    "bat"          # cat 替代品
-    "fd"           # find 替代品
-    "ripgrep"     # grep 替代品
+    "eza"
+    "bat"
+    "fd"
+    "ripgrep"
     "tmux"
     "the_silver_searcher"
 )
@@ -180,10 +180,9 @@ else
     echo_warn "未找到 .zshrc 模板文件: $ZSHRC_SOURCE"
 fi
 
-# ========== 安装 zsh 插件 ==========
-echo_info "========== 安装 zsh 插件 =========="
+# ========== 安装 zsh-autosuggestions ==========
+echo_info "========== 安装 zsh-autosuggestions =========="
 
-# 安装 zsh-autosuggestions
 ZSH_AUTOSUGGESTIONS="$HOME/.zsh/zsh-autosuggestions"
 if [[ ! -d "$ZSH_AUTOSUGGESTIONS" ]]; then
     git clone https://github.com/zsh-users/zsh-autosuggestions.git "$ZSH_AUTOSUGGESTIONS"
@@ -192,13 +191,7 @@ else
     echo_info "zsh-autosuggestions 已存在"
 fi
 
-# 重新加载配置
+# ========== 完成 ==========
 echo_info "========== 安装完成! =========="
-echo ""
-echo_info "请执行以下命令使配置生效:"
-echo "  source ~/.zshrc"
-echo ""
+echo_info "请执行: source ~/.zshrc"
 echo_info "或者重启终端"
-echo ""
-echo_warn "注意: 如果使用 Apple Silicon Mac，某些工具路径可能在 /opt/homebrew 下"
-echo_warn "注意: 如果使用 Apple Silicon Mac，某些工具路径可能在 /opt/homebrew 下"
