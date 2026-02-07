@@ -3,6 +3,11 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
   source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
 fi
 
+# iTerm2 Shell Integration
+if [[ -f "$HOME/.iterm2_shell_integration.zsh" ]]; then
+  source "$HOME/.iterm2_shell_integration.zsh"
+fi
+
 export EDITOR=vim
 export VISUAL="$EDITOR"
 export HISTSIZE=1000

@@ -1,0 +1,30 @@
+---
+# Warp 主题配置
+# 配色方案: One Dark Pro 风格
+
+# 必需字段
+accent: "#61afef"           # 蓝色强调色
+background: "#282c34"       # 深色背景
+foreground: "#abb2bf"       # 默认文字颜色
+details: "darker"           # 主题变体
+
+# 终端调色板
+terminal_colors:
+  normal:
+    black: "#282c34"
+    red: "#e06c75"
+    green: "#98c379"
+    yellow: "#d19a66"
+    blue: "#61afef"
+    magenta: "#c678dd"
+    cyan: "#56b6c2"
+    white: "#abb2bf"
+  bright:
+    black: "#5c6370"
+    red: "#e06c75"
+    green: "#98c379"
+    yellow: "#d19a66"
+    blue: "#61afef"
+    magenta: "#c678dd"
+    cyan: "#56b6c2"
+    white: "#ffffff"

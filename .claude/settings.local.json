@@ -10,7 +10,13 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(git checkout:*)",
       "Bash(curl:*)",
-      "Bash(xxd)"
+      "Bash(xxd)",
+      "WebSearch",
+      "WebFetch(domain:iterm2.com)",
+      "WebFetch(domain:docs.warp.dev)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:warp.dev)",
+      "Bash(plutil:*)"
     ]
   }
 }
