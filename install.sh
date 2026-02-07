@@ -87,9 +87,9 @@ for cask in "${CASKS[@]}"; do
     else
         echo_info "安装 $cask..."
         if [[ "$USE_ROSETTA" == "true" ]]; then
-            arch -arm64 brew install --cask "$cask" 2>/dev/null || echo_warn "$cask 安装失败"
+            arch -arm64 brew install --cask "$cask" || echo_warn "$cask 安装失败"
         else
-            brew install --cask "$cask" 2>/dev/null || echo_warn "$cask 安装失败"
+            brew install --cask "$cask" || echo_warn "$cask 安装失败"
         fi
     fi
 done
