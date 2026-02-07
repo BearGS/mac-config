@@ -82,36 +82,38 @@ for pkg in "${BREW_PACKAGES[@]}"; do
 done
 
 for cask in "${CASKS[@]}"; do
-    if [[ ! -d "/Applications/$cask.app" ]]; then
+    if [[ -d "/Applications/$cask.app" ]]; then
+        echo_info "$cask 已安装"
+    else
         echo_info "安装 $cask..."
         if [[ "$USE_ROSETTA" == "true" ]]; then
-            arch -arm64 brew install --cask "$cask"
+            arch -arm64 brew install --cask "$cask" 2>/dev/null || echo_warn "$cask 安装失败，请手动安装"
         else
-            brew install --cask "$cask"
+            brew install --cask "$cask" 2>/dev/null || echo_warn "$cask 安装失败，请手动安装"
         fi
-    else
-        echo_info "$cask 已安装"
     fi
 done
 
 # ========== 3. 安装 nvm 和 Node ==========
 echo_info "========== 3/8 安装 nvm =========="
-if [[ ! -d "$HOME/.nvm" ]]; then
+export NVM_DIR="$HOME/.nvm"
+
+if [[ ! -d "$NVM_DIR" ]]; then
     echo_info "正在安装 nvm..."
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-else
-    echo_info "nvm 已安装"
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | zsh
 fi
 
-export NVM_DIR="$HOME/.nvm"
+# 加载 nvm
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-if ! nvm ls &> /dev/null; then
-    echo_info "正在安装 Node.js LTS..."
-    nvm install --lts
-    nvm use --lts
-    nvm alias default lts/*
-fi
+# 安装 Node LTS
+if command -v nvm &> /dev/null; then
+    if ! nvm ls &> /dev/null; then
+        echo_info "正在安装 Node.js LTS..."
+        nvm install --lts
+        nvm use --lts
+        nvm alias default lts/*
+    else
 
 # ========== 4. 配置 Zprezto ==========
 echo_info "========== 4/8 配置 Zprezto =========="
@@ -119,15 +121,56 @@ ZPREZTO_DIR="${ZDOTDIR:-$HOME}/.zprezto"
 if [[ ! -d "$ZPREZTO_DIR" ]]; then
     echo_info "正在克隆 Zprezto..."
     git clone --recursive https://github.com/sorin-ionescu/prezto.git "$ZPREZTO_DIR"
+else
+    echo_info "Zprezto 已存在"
 fi
 
 setopt EXTENDED_GLOB
 for rcfile in "$ZPREZTO_DIR"/runcoms/^README.md(.N); do
     target="$HOME/.${rcfile:t}"
     [[ -f "$target" ]] && cp "$target" "${target}.bak.$(date +%Y%m%d%H%M%S)" 2>/dev/null
-    [[ -L "$target" ]] && rm "$target"
-    ln -sf "$rcfile" "$target"
+    [[ -L "$target" ]] && rm "$target" 2>/dev/null
+    ln -sf "$rcfile" "$target" 2>/dev/null || echo_warn "无法创建链接: $target"
 done
+
+    # 安装 Shell Integration
+    ITERM2_SHELL="$HOME/.iterm2_shell_integration.zsh"
+    if [[ ! -f "$ITERM2_SHELL" ]]; then
+        curl -L https://iterm2.com/shell_integration/install_shell_integration.zsh 2>/dev/null | zsh
+    fi
+
+    # 安装 Utilities
+    ITERM2_DIR="$HOME/.iterm2"
+    mkdir -p "$ITERM2_DIR"
+    for util in imgcat imgls it2copy it2setcolor it2getvar it2setkeylabel; do
+        [[ ! -f "$ITERM2_DIR/$util" ]] && curl -L "https://iterm2.com/utilities/$util" -o "$ITERM2_DIR/$util" 2>/dev/null && chmod +x "$ITERM2_DIR/$util"
+    done
+
+    # Appearance 设置
+    defaults write com.googlecode.iterm2 "TabViewType" -integer 2 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "StatusBarLocation" -integer 1 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "HideScrollbar" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "HideBorder" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "ShowTabNumbers" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "ShowActivityIndicator" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "ShowNewOutputIndicator" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "FlashTabBarOnActivity" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "ShowTabBarInFullscreen" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "DimInactiveSplitPanes" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "DimBackgroundWindows" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "DimmingAffectsOnlyText" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "DimmingAmount" -float 0.5 2>/dev/null || true
+
+    # 导入配色文件
+    SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
+    if [[ -f "$SCRIPT_DIR/iterm2_base16_256_dark.itermcolors" ]]; then
+        open "$SCRIPT_DIR/iterm2_base16_256_dark.itermcolors" 2>/dev/null || true
+        echo_info "配色方案已打开，请在 iTerm2 中导入"
+    fi
+
+    killall cfprefsd 2>/dev/null || true
+    echo_warn "请在 iTerm2 > Preferences > Profiles > Colors 中选择 'base16-eighties-256-dark'"
+fi
 
 # ========== 5. 配置 iTerm2 ==========
 echo_info "========== 5/8 配置 iTerm2 =========="
@@ -172,6 +215,8 @@ if [[ -d "/Applications/iTerm.app" ]]; then
 
     killall cfprefsd 2>/dev/null || true
     echo_warn "请在 iTerm2 > Preferences > Profiles > Colors 中选择 'base16-eighties-256-dark'"
+else
+    echo_warn "iTerm2 未安装，跳过配置"
 fi
 
 # ========== 6. 配置 Warp ==========
@@ -204,3 +249,4 @@ echo_warn "iTerm2 手动设置:"
 echo "  1. 打开 iTerm2"
 echo "  2. ⌘+, > Profiles > Colors > Color Presets > base16-eighties-256-dark"
 echo "  3. Appearance > Theme > Dark"
+
