@@ -96,9 +96,17 @@ for cask in "${CASKS[@]}"; do
     else
         echo_info "安装 $cask..."
         if [[ "$USE_ROSETTA" == "true" ]]; then
-            arch -arm64 brew install --cask "$cask" || echo_warn "$cask 安装失败"
+            arch -arm64 brew install --cask "$cask" 2>&1 || echo_warn "$cask 安装失败，请手动安装"
         else
-            brew install --cask "$cask" || echo_warn "$cask 安装失败"
+            brew install --cask "$cask" 2>&1 || {
+                # Docker Desktop 可能包名不同，尝试其他名称
+                if [[ "$cask" == "docker" ]]; then
+                    echo_warn "docker 安装失败，尝试 docker-desktop..."
+                    brew install --cask docker-desktop 2>&1 || echo_warn "请手动安装 Docker Desktop"
+                else
+                    echo_warn "$cask 安装失败，请手动安装"
+                fi
+            }
         fi
     fi
 done
@@ -230,6 +238,10 @@ fi
 # ========== 完成 ==========
 echo_info "========== 安装完成! =========="
 echo_info "请执行: source ~/.zshrc"
+echo ""
+echo_warn "Docker 启动方法:"
+echo "  open /Applications/Docker.app"
+echo "  或在 Applications 文件夹双击 Docker"
 echo ""
 echo_warn "注意:"
 echo "  - 重启 iTerm2 使配置生效"
