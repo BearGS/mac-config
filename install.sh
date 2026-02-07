@@ -82,7 +82,16 @@ for pkg in "${BREW_PACKAGES[@]}"; do
 done
 
 for cask in "${CASKS[@]}"; do
-    if [[ -d "/Applications/$cask.app" ]]; then
+    # 检查应用是否存在
+    CASKS_INSTALLED=false
+    for name in "$cask" "iTerm2" "iTerm" "ITerm2"; do
+        if [[ -d "/Applications/${name}.app" ]]; then
+            CASKS_INSTALLED=true
+            break
+        fi
+    done
+
+    if [[ "$CASKS_INSTALLED" == "true" ]]; then
         echo_info "$cask 已安装"
     else
         echo_info "安装 $cask..."
@@ -140,7 +149,16 @@ done
 
 # ========== 5. 配置 iTerm2 ==========
 echo_info "========== 5/8 配置 iTerm2 =========="
-if [[ -d "/Applications/iTerm.app" ]]; then
+# 检查 iTerm2 是否安装
+ITERM2_INSTALLED=false
+for name in "iTerm2" "iTerm" "iterm2"; do
+    if [[ -d "/Applications/${name}.app" ]]; then
+        ITERM2_INSTALLED=true
+        break
+    fi
+done
+
+if [[ "$ITERM2_INSTALLED" == "true" ]]; then
     # 设置为默认终端
     duti -s com.googlecode.iterm2 public.shell-script all 2>/dev/null || true
 
