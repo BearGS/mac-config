@@ -21,7 +21,8 @@
       "Bash(git pull)",
       "Bash(git stash:*)",
       "Bash(bash -c:*)",
-      "Bash(zsh:*)"
+      "Bash(zsh:*)",
+      "Bash(defaults read:*)"
     ]
   }
 }

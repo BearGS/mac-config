@@ -141,8 +141,10 @@ done
 # ========== 5. 配置 iTerm2 ==========
 echo_info "========== 5/8 配置 iTerm2 =========="
 if [[ -d "/Applications/iTerm.app" ]]; then
+    # 设置为默认终端
     duti -s com.googlecode.iterm2 public.shell-script all 2>/dev/null || true
 
+    # 安装 Shell Integration
     ITERM2_SHELL="$HOME/.iterm2_shell_integration.zsh"
     if [[ ! -f "$ITERM2_SHELL" ]]; then
         echo_info "安装 iTerm2 Shell Integration..."
@@ -155,6 +157,7 @@ if [[ -d "/Applications/iTerm.app" ]]; then
         rm -f /tmp/iterm2_shell.zsh
     fi
 
+    # 安装 Utilities
     ITERM2_DIR="$HOME/.iterm2"
     mkdir -p "$ITERM2_DIR"
     for util in imgcat imgls it2copy it2setcolor it2getvar it2setkeylabel; do
@@ -168,28 +171,18 @@ if [[ -d "/Applications/iTerm.app" ]]; then
         fi
     done
 
-    defaults write com.googlecode.iterm2 "TabViewType" -integer 2 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "StatusBarLocation" -integer 1 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "HideScrollbar" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "HideBorder" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "ShowTabNumbers" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "ShowActivityIndicator" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "ShowNewOutputIndicator" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "FlashTabBarOnActivity" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "ShowTabBarInFullscreen" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "DimInactiveSplitPanes" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "DimBackgroundWindows" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "DimmingAffectsOnlyText" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "DimmingAmount" -float 0.5 2>/dev/null || true
-
+    # 导入配置 plist
     SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
-    if [[ -f "$SCRIPT_DIR/iterm2_base16_256_dark.itermcolors" ]]; then
-        open "$SCRIPT_DIR/iterm2_base16_256_dark.itermcolors" 2>/dev/null || true
-        echo_info "配色方案已打开，请在 iTerm2 中导入"
+    PLIST_FILE="$SCRIPT_DIR/iterm2_com.apple.googlecode.iterm2.plist"
+    if [[ -f "$PLIST_FILE" ]]; then
+        echo_info "导入 iTerm2 配置..."
+        [[ -f "$HOME/Library/Preferences/com.googlecode.iterm2.plist" ]] && cp "$HOME/Library/Preferences/com.googlecode.iterm2.plist" "$HOME/Library/Preferences/com.googlecode.iterm2.plist.bak"
+        /usr/bin/defaults import com.googlecode.iterm2 "$PLIST_FILE" 2>/dev/null || echo_warn "iTerm2 配置导入失败"
+        killall cfprefsd 2>/dev/null || true
+        echo_info "iTerm2 配置已导入"
+    else
+        echo_warn "iTerm2 配置文件不存在"
     fi
-
-    killall cfprefsd 2>/dev/null || true
-    echo_warn "请在 iTerm2 > Preferences > Profiles > Colors 中选择 base16-eighties-256-dark"
 else
     echo_warn "iTerm2 未安装，跳过配置"
 fi
@@ -220,8 +213,5 @@ fi
 echo_info "========== 安装完成! =========="
 echo_info "请执行: source ~/.zshrc"
 echo ""
-echo_warn "iTerm2 手动设置:"
-echo "  1. 打开 iTerm2"
-echo "  2. Profiles > Colors > Color Presets > Import > iterm2_base16_256_dark.itermcolors"
-echo "  3. 选择 base16-eighties-256-dark"
-echo "  4. Appearance > Theme > Dark"
+echo_warn "注意:"
+echo "  - 重启 iTerm2 使配置生效"
