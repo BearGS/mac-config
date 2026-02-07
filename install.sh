@@ -145,13 +145,27 @@ if [[ -d "/Applications/iTerm.app" ]]; then
 
     ITERM2_SHELL="$HOME/.iterm2_shell_integration.zsh"
     if [[ ! -f "$ITERM2_SHELL" ]]; then
-        curl -L https://iterm2.com/shell_integration/install_shell_integration.zsh 2>/dev/null | zsh
+        echo_info "安装 iTerm2 Shell Integration..."
+        curl -L --max-time 10 "https://iterm2.com/shell_integration/install_shell_integration.zsh" -o /tmp/iterm2_shell.zsh 2>/dev/null
+        if [[ -s /tmp/iterm2_shell.zsh ]] && head -1 /tmp/iterm2_shell.zsh | grep -q "^#!/"; then
+            zsh /tmp/iterm2_shell.zsh
+        else
+            echo_warn "iTerm2 Shell Integration 下载失败，跳过"
+        fi
+        rm -f /tmp/iterm2_shell.zsh
     fi
 
     ITERM2_DIR="$HOME/.iterm2"
     mkdir -p "$ITERM2_DIR"
     for util in imgcat imgls it2copy it2setcolor it2getvar it2setkeylabel; do
-        [[ ! -f "$ITERM2_DIR/$util" ]] && curl -L "https://iterm2.com/utilities/$util" -o "$ITERM2_DIR/$util" 2>/dev/null && chmod +x "$ITERM2_DIR/$util"
+        if [[ ! -f "$ITERM2_DIR/$util" ]]; then
+            curl -L --max-time 10 "https://iterm2.com/utilities/$util" -o "$ITERM2_DIR/$util" 2>/dev/null
+            if [[ -s "$ITERM2_DIR/$util" ]] && head -1 "$ITERM2_DIR/$util" | grep -q "^#!"; then
+                chmod +x "$ITERM2_DIR/$util"
+            else
+                rm -f "$ITERM2_DIR/$util"
+            fi
+        fi
     done
 
     defaults write com.googlecode.iterm2 "TabViewType" -integer 2 2>/dev/null || true
