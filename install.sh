@@ -13,14 +13,14 @@ NC='\033[0m'
 
 echo_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
 echo_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-echo_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 # 检测架构
 ARCH=$([[ $(uname -m) == 'arm64' ]] && echo "arm64" || echo "x86_64")
+BREW_PREFIX=$([[ $(uname -m) == 'arm64' ]] && echo "/opt/homebrew" || echo "/usr/local")
 echo_info "检测到架构: $ARCH"
 
 # ========== 1. 安装 Homebrew ==========
-echo_info "========== 1/7 安装 Homebrew =========="
+echo_info "========== 1/8 安装 Homebrew =========="
 if ! command -v brew &> /dev/null; then
     echo_info "正在安装 Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -37,7 +37,7 @@ fi
 eval "$(brew shellenv)"
 
 # ========== 2. 安装 Homebrew 包 ==========
-echo_info "========== 2/7 安装 Homebrew 包 =========="
+echo_info "========== 2/8 安装 Homebrew 包 =========="
 
 BREW_PACKAGES=(
     "zsh"
@@ -54,21 +54,31 @@ BREW_PACKAGES=(
     "tmux"
     "the_silver_searcher"
     "duti"
-    "iterm2"
-    "warp"
 )
 
+# Cask 包
+CASKS=("iterm2" "warp")
+
 for pkg in "${BREW_PACKAGES[@]}"; do
-    if brew list "$pkg" &> /dev/null 2>/dev/null; then
-        echo_info "$pkg 已安装"
+    if ! brew list "$pkg" &> /dev/null 2>&1; then
+        echo_info "安装 $pkg..."
+        brew install "$pkg"
     else
-        echo_info "正在安装 $pkg..."
-        brew install "$pkg" 2>/dev/null || brew install --cask "$pkg" 2>/dev/null || true
+        echo_info "$pkg 已安装"
+    fi
+done
+
+for cask in "${CASKS[@]}"; do
+    if [[ ! -d "/Applications/$cask.app" ]]; then
+        echo_info "安装 $cask..."
+        brew install --cask "$cask"
+    else
+        echo_info "$cask 已安装"
     fi
 done
 
 # ========== 3. 安装 nvm 和 Node ==========
-echo_info "========== 3/7 安装 nvm =========="
+echo_info "========== 3/8 安装 nvm =========="
 if [[ ! -d "$HOME/.nvm" ]]; then
     echo_info "正在安装 nvm..."
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
@@ -87,7 +97,7 @@ if ! nvm ls &> /dev/null; then
 fi
 
 # ========== 4. 配置 Zprezto ==========
-echo_info "========== 4/7 配置 Zprezto =========="
+echo_info "========== 4/8 配置 Zprezto =========="
 ZPREZTO_DIR="${ZDOTDIR:-$HOME}/.zprezto"
 if [[ ! -d "$ZPREZTO_DIR" ]]; then
     echo_info "正在克隆 Zprezto..."
@@ -103,7 +113,7 @@ for rcfile in "$ZPREZTO_DIR"/runcoms/^README.md(.N); do
 done
 
 # ========== 5. 配置 iTerm2 ==========
-echo_info "========== 5/7 配置 iTerm2 =========="
+echo_info "========== 5/8 配置 iTerm2 =========="
 if [[ -d "/Applications/iTerm.app" ]]; then
     # 设置为默认终端
     duti -s com.googlecode.iterm2 public.shell-script all 2>/dev/null || true
@@ -111,43 +121,59 @@ if [[ -d "/Applications/iTerm.app" ]]; then
     # 安装 Shell Integration
     ITERM2_SHELL="$HOME/.iterm2_shell_integration.zsh"
     if [[ ! -f "$ITERM2_SHELL" ]]; then
-        echo_info "安装 iTerm2 Shell Integration..."
         curl -L https://iterm2.com/shell_integration/install_shell_integration.zsh 2>/dev/null | zsh
     fi
 
     # 安装 Utilities
     ITERM2_DIR="$HOME/.iterm2"
     mkdir -p "$ITERM2_DIR"
-    for util in imgcat imgls it2copy it2setcolor it2getvar; do
+    for util in imgcat imgls it2copy it2setcolor it2getvar it2setkeylabel; do
         [[ ! -f "$ITERM2_DIR/$util" ]] && curl -L "https://iterm2.com/utilities/$util" -o "$ITERM2_DIR/$util" 2>/dev/null && chmod +x "$ITERM2_DIR/$util"
     done
 
-    # 偏好设置
-    defaults write com.googlecode.iterm2 SUEnableAutomaticChecks -bool false 2>/dev/null || true
-    defaults write com.googlecode.iterm2 SUSendProfileInfo -bool false 2>/dev/null || true
+    # Appearance 设置
+    defaults write com.googlecode.iterm2 "TabViewType" -integer 2 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "StatusBarLocation" -integer 1 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "HideScrollbar" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "HideBorder" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "ShowTabNumbers" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "ShowActivityIndicator" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "ShowNewOutputIndicator" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "FlashTabBarOnActivity" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "ShowTabBarInFullscreen" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "DimInactiveSplitPanes" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "DimBackgroundWindows" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "DimmingAffectsOnlyText" -bool true 2>/dev/null || true
+    defaults write com.googlecode.iterm2 "DimmingAmount" -float 0.5 2>/dev/null || true
+
+    # 导入配色文件
+    SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
+    if [[ -f "$SCRIPT_DIR/iterm2_base16_256_dark.itermcolors" ]]; then
+        open "$SCRIPT_DIR/iterm2_base16_256_dark.itermcolors" 2>/dev/null || true
+        echo_info "配色方案已打开，请在 iTerm2 中导入"
+    fi
+
     killall cfprefsd 2>/dev/null || true
-else
-    echo_warn "iTerm2 未安装，跳过配置"
+    echo_warn "请在 iTerm2 > Preferences > Profiles > Colors 中选择 'base16-eighties-256-dark'"
 fi
 
 # ========== 6. 配置 Warp ==========
-echo_info "========== 6/7 配置 Warp =========="
+echo_info "========== 6/8 配置 Warp =========="
 if [[ -d "/Applications/Warp.app" ]]; then
     WARP_THEMES="$HOME/.warp/themes"
     mkdir -p "$WARP_THEMES"
-    cp "$SCRIPT_DIR/warp_theme.yaml" "$WARP_THEMES/one-dark.yaml" 2>/dev/null || true
-    echo_info "Warp 主题已安装: one-dark"
-    echo_info "请在 Warp Settings > Appearance > Theme 中选择"
-else
-    echo_warn "Warp 未安装，跳过配置"
+    SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
+    [[ -f "$SCRIPT_DIR/warp_theme.yaml" ]] && cp "$SCRIPT_DIR/warp_theme.yaml" "$WARP_THEMES/one-dark.yaml" 2>/dev/null || true
+    echo_warn "请在 Warp Settings > Appearance > Theme 中选择 'one-dark'"
 fi
 
 # ========== 7. 配置 .zshrc ==========
-echo_info "========== 7/7 配置 .zshrc =========="
+echo_info "========== 7/8 配置 .zshrc =========="
 SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
 [[ -f "$SCRIPT_DIR/.zshrc" ]] && cp "$SCRIPT_DIR/.zshrc" "$HOME/.zshrc"
 
-# ========== 安装 zsh-autosuggestions ==========
+# ========== 8. 安装 zsh-autosuggestions ==========
+echo_info "========== 8/8 安装 zsh 插件 =========="
 ZSH_AUTOSUGGESTIONS="$HOME/.zsh/zsh-autosuggestions"
 if [[ ! -d "$ZSH_AUTOSUGGESTIONS" ]]; then
     git clone https://github.com/zsh-users/zsh-autosuggestions.git "$ZSH_AUTOSUGGESTIONS"
@@ -156,4 +182,8 @@ fi
 # ========== 完成 ==========
 echo_info "========== 安装完成! =========="
 echo_info "请执行: source ~/.zshrc"
-echo_info "然后重启终端或打开 iTerm2/Warp"
+echo ""
+echo_warn "iTerm2 手动设置:"
+echo "  1. 打开 iTerm2"
+echo "  2. ⌘+, > Profiles > Colors > Color Presets > base16-eighties-256-dark"
+echo "  3. Appearance > Theme > Dark"
