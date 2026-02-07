@@ -17,6 +17,15 @@ echo_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 # 检测架构
 ARCH=$([[ $(uname -m) == 'arm64' ]] && echo "arm64" || echo "x86_64")
 BREW_PREFIX=$([[ $(uname -m) == 'arm64' ]] && echo "/opt/homebrew" || echo "/usr/local")
+
+# 检查是否在 Rosetta 下运行（ARM Mac 但终端是 x86_64 模式）
+if [[ "$ARCH" == "x86_64" ]] && [[ -d "/opt/homebrew" ]]; then
+    echo_warn "检测到 Rosetta 2 模式，将使用 arch -arm64 安装"
+    USE_ROSETTA=true
+else
+    USE_ROSETTA=false
+fi
+
 echo_info "检测到架构: $ARCH"
 
 # ========== 1. 安装 Homebrew ==========
@@ -62,7 +71,11 @@ CASKS=("iterm2" "warp")
 for pkg in "${BREW_PACKAGES[@]}"; do
     if ! brew list "$pkg" &> /dev/null 2>&1; then
         echo_info "安装 $pkg..."
-        brew install "$pkg"
+        if [[ "$USE_ROSETTA" == "true" ]]; then
+            arch -arm64 brew install "$pkg"
+        else
+            brew install "$pkg"
+        fi
     else
         echo_info "$pkg 已安装"
     fi
@@ -71,7 +84,11 @@ done
 for cask in "${CASKS[@]}"; do
     if [[ ! -d "/Applications/$cask.app" ]]; then
         echo_info "安装 $cask..."
-        brew install --cask "$cask"
+        if [[ "$USE_ROSETTA" == "true" ]]; then
+            arch -arm64 brew install --cask "$cask"
+        else
+            brew install --cask "$cask"
+        fi
     else
         echo_info "$cask 已安装"
     fi

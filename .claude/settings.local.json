@@ -16,7 +16,11 @@
       "WebFetch(domain:docs.warp.dev)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:warp.dev)",
-      "Bash(plutil:*)"
+      "Bash(plutil:*)",
+      "Bash(git stash)",
+      "Bash(git pull)",
+      "Bash(git stash:*)",
+      "Bash(bash -c:*)"
     ]
   }
 }
