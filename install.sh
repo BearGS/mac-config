@@ -65,10 +65,29 @@ BREW_PACKAGES=(
     "duti"
 )
 
-# Cask 包
-CASKS=("iterm2" "warp" "docker-desktop")
+# Docker Desktop 安装
+echo_info "安装 Docker Desktop..."
+if [[ -d "/Applications/Docker.app" ]]; then
+    echo_info "Docker Desktop 已安装"
+else
+    echo_info "正在下载并安装 Docker Desktop..."
+    brew install --cask docker-desktop || {
+        echo_warn "brew 安装失败，尝试手动下载..."
+        # 手动下载 Docker Desktop
+        DOWNLOAD_URL="https://desktop.docker.com/main/main/arm64/155248/Docker.dmg"
+        if [[ $(uname -m) == 'x86_64' ]]; then
+            DOWNLOAD_URL="https://desktop.docker.com/main/main/amd64/155248/Docker.dmg"
+        fi
+        curl -fsSL "$DOWNLOAD_URL" -o /tmp/Docker.dmg
+        hdiutil attach /tmp/Docker.dmg -mountpoint /Volumes/Docker
+        cp -R "/Volumes/Docker/Docker.app" /Applications/
+        hdiutil detach /Volumes/Docker
+        rm -f /tmp/Docker.dmg
+        echo_info "Docker Desktop 已安装到 /Applications/"
+    }
+fi
 
-# Docker Compose 作为 formula 安装
+# Docker Compose
 echo_info "安装 docker-compose..."
 if ! command -v docker-compose &> /dev/null; then
     brew install docker-compose
