@@ -44,7 +44,7 @@ export NVM_DIR="$HOME/.nvm"
 zplug "zsh-users/zsh-autosuggestions"
 zplug "zsh-users/zsh-completions"
 zplug "zsh-users/zsh-history-substring-search"
-zplug "junegunn/fzf", from:gh, as:command, use:"bin/fzf"
+zplug "junegunn/fzf", as:command, use:"bin/fzf"
 zplug "Aloxaf/fzf-tab"
 
 # 只有 fasd 可用时才添加
