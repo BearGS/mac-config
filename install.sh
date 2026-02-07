@@ -18,7 +18,7 @@ echo_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 ARCH=$([[ $(uname -m) == 'arm64' ]] && echo "arm64" || echo "x86_64")
 BREW_PREFIX=$([[ $(uname -m) == 'arm64' ]] && echo "/opt/homebrew" || echo "/usr/local")
 
-# 检查是否在 Rosetta 下运行（ARM Mac 但终端是 x86_64 模式）
+# 检查是否在 Rosetta 下运行
 if [[ "$ARCH" == "x86_64" ]] && [[ -d "/opt/homebrew" ]]; then
     echo_warn "检测到 Rosetta 2 模式，将使用 arch -arm64 安装"
     USE_ROSETTA=true
@@ -87,9 +87,9 @@ for cask in "${CASKS[@]}"; do
     else
         echo_info "安装 $cask..."
         if [[ "$USE_ROSETTA" == "true" ]]; then
-            arch -arm64 brew install --cask "$cask" 2>/dev/null || echo_warn "$cask 安装失败，请手动安装"
+            arch -arm64 brew install --cask "$cask" 2>/dev/null || echo_warn "$cask 安装失败"
         else
-            brew install --cask "$cask" 2>/dev/null || echo_warn "$cask 安装失败，请手动安装"
+            brew install --cask "$cask" 2>/dev/null || echo_warn "$cask 安装失败"
         fi
     fi
 done
@@ -114,6 +114,11 @@ if command -v nvm &> /dev/null; then
         nvm use --lts
         nvm alias default lts/*
     else
+        echo_info "Node.js 已安装"
+    fi
+else
+    echo_warn "nvm 安装失败，请手动安装 Node.js"
+fi
 
 # ========== 4. 配置 Zprezto ==========
 echo_info "========== 4/8 配置 Zprezto =========="
@@ -133,65 +138,22 @@ for rcfile in "$ZPREZTO_DIR"/runcoms/^README.md(.N); do
     ln -sf "$rcfile" "$target" 2>/dev/null || echo_warn "无法创建链接: $target"
 done
 
-    # 安装 Shell Integration
-    ITERM2_SHELL="$HOME/.iterm2_shell_integration.zsh"
-    if [[ ! -f "$ITERM2_SHELL" ]]; then
-        curl -L https://iterm2.com/shell_integration/install_shell_integration.zsh 2>/dev/null | zsh
-    fi
-
-    # 安装 Utilities
-    ITERM2_DIR="$HOME/.iterm2"
-    mkdir -p "$ITERM2_DIR"
-    for util in imgcat imgls it2copy it2setcolor it2getvar it2setkeylabel; do
-        [[ ! -f "$ITERM2_DIR/$util" ]] && curl -L "https://iterm2.com/utilities/$util" -o "$ITERM2_DIR/$util" 2>/dev/null && chmod +x "$ITERM2_DIR/$util"
-    done
-
-    # Appearance 设置
-    defaults write com.googlecode.iterm2 "TabViewType" -integer 2 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "StatusBarLocation" -integer 1 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "HideScrollbar" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "HideBorder" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "ShowTabNumbers" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "ShowActivityIndicator" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "ShowNewOutputIndicator" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "FlashTabBarOnActivity" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "ShowTabBarInFullscreen" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "DimInactiveSplitPanes" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "DimBackgroundWindows" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "DimmingAffectsOnlyText" -bool true 2>/dev/null || true
-    defaults write com.googlecode.iterm2 "DimmingAmount" -float 0.5 2>/dev/null || true
-
-    # 导入配色文件
-    SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
-    if [[ -f "$SCRIPT_DIR/iterm2_base16_256_dark.itermcolors" ]]; then
-        open "$SCRIPT_DIR/iterm2_base16_256_dark.itermcolors" 2>/dev/null || true
-        echo_info "配色方案已打开，请在 iTerm2 中导入"
-    fi
-
-    killall cfprefsd 2>/dev/null || true
-    echo_warn "请在 iTerm2 > Preferences > Profiles > Colors 中选择 'base16-eighties-256-dark'"
-fi
-
 # ========== 5. 配置 iTerm2 ==========
 echo_info "========== 5/8 配置 iTerm2 =========="
 if [[ -d "/Applications/iTerm.app" ]]; then
-    # 设置为默认终端
     duti -s com.googlecode.iterm2 public.shell-script all 2>/dev/null || true
 
-    # 安装 Shell Integration
     ITERM2_SHELL="$HOME/.iterm2_shell_integration.zsh"
     if [[ ! -f "$ITERM2_SHELL" ]]; then
         curl -L https://iterm2.com/shell_integration/install_shell_integration.zsh 2>/dev/null | zsh
     fi
 
-    # 安装 Utilities
     ITERM2_DIR="$HOME/.iterm2"
     mkdir -p "$ITERM2_DIR"
     for util in imgcat imgls it2copy it2setcolor it2getvar it2setkeylabel; do
         [[ ! -f "$ITERM2_DIR/$util" ]] && curl -L "https://iterm2.com/utilities/$util" -o "$ITERM2_DIR/$util" 2>/dev/null && chmod +x "$ITERM2_DIR/$util"
     done
 
-    # Appearance 设置
     defaults write com.googlecode.iterm2 "TabViewType" -integer 2 2>/dev/null || true
     defaults write com.googlecode.iterm2 "StatusBarLocation" -integer 1 2>/dev/null || true
     defaults write com.googlecode.iterm2 "HideScrollbar" -bool true 2>/dev/null || true
@@ -206,7 +168,6 @@ if [[ -d "/Applications/iTerm.app" ]]; then
     defaults write com.googlecode.iterm2 "DimmingAffectsOnlyText" -bool true 2>/dev/null || true
     defaults write com.googlecode.iterm2 "DimmingAmount" -float 0.5 2>/dev/null || true
 
-    # 导入配色文件
     SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
     if [[ -f "$SCRIPT_DIR/iterm2_base16_256_dark.itermcolors" ]]; then
         open "$SCRIPT_DIR/iterm2_base16_256_dark.itermcolors" 2>/dev/null || true
@@ -214,7 +175,7 @@ if [[ -d "/Applications/iTerm.app" ]]; then
     fi
 
     killall cfprefsd 2>/dev/null || true
-    echo_warn "请在 iTerm2 > Preferences > Profiles > Colors 中选择 'base16-eighties-256-dark'"
+    echo_warn "请在 iTerm2 > Preferences > Profiles > Colors 中选择 base16-eighties-256-dark"
 else
     echo_warn "iTerm2 未安装，跳过配置"
 fi
@@ -226,7 +187,7 @@ if [[ -d "/Applications/Warp.app" ]]; then
     mkdir -p "$WARP_THEMES"
     SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" && pwd)"
     [[ -f "$SCRIPT_DIR/warp_theme.yaml" ]] && cp "$SCRIPT_DIR/warp_theme.yaml" "$WARP_THEMES/one-dark.yaml" 2>/dev/null || true
-    echo_warn "请在 Warp Settings > Appearance > Theme 中选择 'one-dark'"
+    echo_warn "请在 Warp Settings > Appearance > Theme 中选择 one-dark"
 fi
 
 # ========== 7. 配置 .zshrc ==========
@@ -247,6 +208,6 @@ echo_info "请执行: source ~/.zshrc"
 echo ""
 echo_warn "iTerm2 手动设置:"
 echo "  1. 打开 iTerm2"
-echo "  2. ⌘+, > Profiles > Colors > Color Presets > base16-eighties-256-dark"
-echo "  3. Appearance > Theme > Dark"
-
+echo "  2. Profiles > Colors > Color Presets > Import > iterm2_base16_256_dark.itermcolors"
+echo "  3. 选择 base16-eighties-256-dark"
+echo "  4. Appearance > Theme > Dark"
