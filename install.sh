@@ -66,7 +66,15 @@ BREW_PACKAGES=(
 )
 
 # Cask 包
-CASKS=("iterm2" "warp" "docker" "docker-compose")
+CASKS=("iterm2" "warp" "docker-desktop")
+
+# Docker Compose 作为 formula 安装
+echo_info "安装 docker-compose..."
+if ! command -v docker-compose &> /dev/null; then
+    brew install docker-compose
+else
+    echo_info "docker-compose 已安装"
+fi
 
 for pkg in "${BREW_PACKAGES[@]}"; do
     if ! brew list "$pkg" &> /dev/null 2>&1; then
@@ -98,15 +106,7 @@ for cask in "${CASKS[@]}"; do
         if [[ "$USE_ROSETTA" == "true" ]]; then
             arch -arm64 brew install --cask "$cask" 2>&1 || echo_warn "$cask 安装失败，请手动安装"
         else
-            brew install --cask "$cask" 2>&1 || {
-                # Docker Desktop 可能包名不同，尝试其他名称
-                if [[ "$cask" == "docker" ]]; then
-                    echo_warn "docker 安装失败，尝试 docker-desktop..."
-                    brew install --cask docker-desktop 2>&1 || echo_warn "请手动安装 Docker Desktop"
-                else
-                    echo_warn "$cask 安装失败，请手动安装"
-                fi
-            }
+            brew install --cask "$cask" 2>&1 || echo_warn "$cask 安装失败，请手动安装"
         fi
     fi
 done
